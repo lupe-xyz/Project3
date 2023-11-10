@@ -16,8 +16,7 @@ public class CSC130_Project_3 {
     public static void main(String[] args) {
         // TODO code application logic here
         System.out.println("Hello world");
-        System.out.println("Testing testing");
-        System.out.println("Repository test.");
+    
     }
     
 }
