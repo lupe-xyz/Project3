@@ -8,14 +8,17 @@ package csc130_project_3;
  *
  * @author lupe.xyz
  */
-public class CSC130_Project_3 {
+public class CaseGame {
 
-    /**
-     * @param args the command line arguments
-     */
+    
+    public static void testMethod() {
+        //
+    }
+    
     public static void main(String[] args) {
         // TODO code application logic here
-        System.out.println("Hello world");
+        System.out.println("Case Game test.");
+        
     
     }
     
