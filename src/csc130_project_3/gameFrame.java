@@ -1,10 +1,11 @@
 package csc130_project_3;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -16,12 +17,17 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 
-
 public class gameFrame extends JFrame implements ActionListener {
     
     //declaring variables/arrays
-    int casesToOpen = 1; // keeps track of cases left to choose. Initialized with 1 because player chooses 1 case to start.
+    int bankOffer = 0; //money offered to player
+    int prizeFactor = 0; //denominator for offer, it increases as game goes on, to 100
+    int casesToOpen = 0; //how many cases left to open before next bank offer
+    int numCasesOpened = 0; //was caseCount_yourCase
+    int casesInRound = 1; // keeps track of cases left to choose. Initialized with 1 because player chooses 1 case to start.
     boolean isFirstTurn = true; //changes to false after the first turn
+    
+    
     
     //declaring GUI components
     JLabel topLabel; //holds the "CHOOSE X CASE(S)" text at the top of the frame
@@ -33,32 +39,34 @@ public class gameFrame extends JFrame implements ActionListener {
     JPanel casePanel; //center panel holding caseButtons
     JPanel leftPanel; //left side of GUI, first 13 prize values
     JPanel rightPanel; //right side of GUI, last 12 prize values
-    ImageIcon xIcon; //Icon for checkBoxes when selected
-    //ImageIcon checkIcon; //icon for when checkBoxes are unselected, may add later
+    ImageIcon xIcon; //Icon for checkBoxes when selected    
     
     
-    //ATTEMPT: use this array to calculate the average for Banker class
-    //this array is shuffled and assigned to caseButtons
-    Integer[] caseValuesArray = { 1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 
+    //all three arrays use the values from this array
+    Integer[] playValues = { 1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 
                             500, 750, 1000, 5000, 10000, 25000, 50000, 
                             75000, 100000, 200000, 300000, 400000, 
                             500000, 750000, 1000000 };
     
-    //this array stays the same and assigned to checkBoxes
-    Integer[] prizeValuesArray = { 1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 
-                            500, 750, 1000, 5000, 10000, 25000, 50000, 
-                            75000, 100000, 200000, 300000, 400000, 
-                            500000, 750000, 1000000 };
-
+    //this array is shuffled and put into the case buttons
+    List<Integer> caseValuesArray = new ArrayList<>();
+    //this array is used to initialize checkboxes and keep track
+    List<Integer> prizeValuesArray = new ArrayList<>();
+    //this array is used for the bank offer/averages
+    List<Integer> avgSumsArray = new ArrayList<>();
     
     //gameFrame Constructor
     gameFrame() {
-        //Shuffling caseValuesArray
-        List<Integer> intList;
-        intList = Arrays.asList(caseValuesArray);
-        Collections.shuffle(intList);
-        intList.toArray(caseValuesArray);
         
+        for(int i = 0; i < playValues.length; i++) {
+            caseValuesArray.add(playValues[i]);
+            prizeValuesArray.add(playValues[i]);
+            avgSumsArray.add(playValues[i]);
+        }
+        //shuffling case values
+        Collections.shuffle(caseValuesArray);
+        
+
         //JLabel specs
         topLabel = new JLabel();
         topLabel.setOpaque(true);
@@ -71,12 +79,12 @@ public class gameFrame extends JFrame implements ActionListener {
         bottomLabel = new JLabel();
         bottomLabel.setOpaque(true);
         bottomLabel.setBounds(380, 681, 640, 80);
+        bottomLabel.setForeground(Color.WHITE);
         bottomLabel.setBackground(Color.BLACK);
-        bottomLabel.setLayout(new GridLayout(1,2,10,10));
-        
-        
-        
-        
+        bottomLabel.setLayout(new GridLayout(1,2,250,10));
+        bottomLabel.setHorizontalAlignment(JLabel.CENTER);
+        bottomLabel.setFont(new Font ("Comic Sans", Font.BOLD, 20));
+        bottomLabel.setText("CLICK ANY CASE");
         
         //JPanel = a GUI component that functions as a container to hold other components
         
@@ -99,7 +107,6 @@ public class gameFrame extends JFrame implements ActionListener {
         rightPanel.setBackground(Color.BLACK);
         rightPanel.setBounds(1050,0,350,770);
         rightPanel.setLayout(new GridLayout(12,1,10,10));
-        
 
         //initializing button specs
         for (int i = 0; i < caseButtons.length; i++) {
@@ -115,21 +122,22 @@ public class gameFrame extends JFrame implements ActionListener {
 
         }
         
+        //DEAL button
         bDeal = new JButton("DEAL");
         bDeal.setOpaque(true);
         bDeal.setFocusable(false);
-        bDeal.setFont(new Font("Comic Sans", Font.BOLD, 40));
+        bDeal.setFont(new Font("Comic Sans", Font.BOLD, 30));
         bDeal.setForeground(Color.BLACK);
         bDeal.setBackground(Color.LIGHT_GRAY);
         bDeal.setBorder(BorderFactory.createEtchedBorder());
         bDeal.addActionListener(this);
         bDeal.setEnabled(false);
             
-        
+        //NO DEAL button
         bNoDeal = new JButton("NO DEAL");
         bNoDeal.setOpaque(true);
         bNoDeal.setFocusable(false);
-        bNoDeal.setFont(new Font("Comic Sans", Font.BOLD, 40));
+        bNoDeal.setFont(new Font("Comic Sans", Font.BOLD, 30));
         bNoDeal.setForeground(Color.BLACK);
         bNoDeal.setBackground(Color.LIGHT_GRAY);
         bNoDeal.setBorder(BorderFactory.createEtchedBorder());
@@ -145,7 +153,7 @@ public class gameFrame extends JFrame implements ActionListener {
         for (int i = 0; i < checkBoxes.length; i++) {
             checkBoxes[i] = new JCheckBox();
             checkBoxes[i].setFocusable(false);
-            checkBoxes[i].setText("$"+ Integer.toString(prizeValuesArray[i]));
+            checkBoxes[i].setText("$"+ Integer.toString(prizeValuesArray.get(i)));
             checkBoxes[i].setOpaque(true);
             checkBoxes[i].setFont(new Font("Comic Sans", Font.BOLD, 30));
             checkBoxes[i].setHorizontalAlignment(JCheckBox.CENTER );
@@ -185,141 +193,152 @@ public class gameFrame extends JFrame implements ActionListener {
     }
     //end gameFrame Constructor
     
-    public void updateCasesToOpen() {
-        
-    }
     
-    //method to change casesToOpen variable and print change on label
-    public void updateCasesToOpen(int count) {
-        casesToOpen = count; // updates how many cases left to open
-        System.out.println(casesToOpen + " cases to open");
-        //topLabel.setText("CHOOSE " + casesToOpen + " CASE(S)");
+    //getAvg method calculates the bank offer using averages
+    public void getAvg() {
+        int currentSum = 0;
+        int currentAverage = 0;
+        for (int i = 0; i < avgSumsArray.size(); i++) {
+            currentSum += avgSumsArray.get(i);
+        }
+        currentAverage = currentSum/avgSumsArray.size();       
         
+        System.out.println("avg: " + currentAverage);
+        System.out.println("sum: " + currentSum);
+        
+        switch (numCasesOpened) {
+            case 6 -> {
+                //opened 6 out of 25
+                topLabel.setText("BANK OFFER - OPEN 5 CASES");
+                prizeFactor = 10; //10%
+                bankOffer = currentAverage / prizeFactor;
+                bottomLabel.setText("Offer = " + bankOffer);
+                casesToOpen = 5;
+            }
+            case 11 -> {
+                //another 5 have been opened (11/25)
+                topLabel.setText("BANK OFFER - OPEN 4 CASES");
+                prizeFactor = 7; //%14.2
+                bankOffer = currentAverage / prizeFactor;
+                bottomLabel.setText("Offer = " + bankOffer);
+                casesToOpen = 4;
+            }
+            case 15 -> {
+                //another 4 have been opened (15/25)
+                topLabel.setText("BANK OFFER - OPEN 3 CASES");
+                prizeFactor = 5; //20%
+                bankOffer = currentAverage / prizeFactor;
+                bottomLabel.setText("Offer = " + bankOffer);
+                casesToOpen = 3;
+            }
+            case 18 -> {
+                //another 3 have been opened (18/25)
+                topLabel.setText("BANK OFFER - OPEN 2 CASES");
+                prizeFactor = 3; //33%
+                bankOffer = currentAverage / prizeFactor;
+                bottomLabel.setText("Offer = " + bankOffer);
+                casesToOpen = 2;
+            }
+            case 20 -> {
+                //another 2 have been opened (20/25)
+                topLabel.setText("BANK OFFER - OPEN 1 CASE");
+                prizeFactor = 2; //50%
+                bankOffer = currentAverage / prizeFactor;
+                bottomLabel.setText("Offer = " + bankOffer);
+                casesToOpen = 1;
+            }
+            case 21 -> {
+                //another 1 have been opened (21/25)
+                topLabel.setText("BANK OFFER - OPEN 1 CASE");
+                prizeFactor = 3; //33% * 2 = 66%
+                bankOffer = (currentAverage / prizeFactor) * 2;
+                bottomLabel.setText("Offer = " + bankOffer);
+                casesToOpen = 1;
+            }
+            case 22 -> {
+                //another 1 have been opened (22/25)
+                topLabel.setText("BANK OFFER - OPEN 1 CASES");
+                prizeFactor = 5; //20% * 4 = 80%
+                bankOffer = (currentAverage / prizeFactor) * 4;
+                bottomLabel.setText("Offer = " + bankOffer);
+                casesToOpen = 1;
+            }
+            case 23 -> {
+                //another 1 have been opened, only 2 left, final choice goes here
+                prizeFactor = 1; //100%
+                bankOffer = currentAverage / prizeFactor;
+                bottomLabel.setText("Last Offer = " + bankOffer);
+                casesToOpen = 1;
+            }
+            case 24 -> //this is opened to see if you have won
+                //prizeFactor = 25;
+                //bankOffer = currentAverage / prizeFactor;
+                bottomLabel.setText("THE END");
+            default -> {
+            }
+        }
+        casesToOpen--;
     }
     
     //action specs
     @Override
     public void actionPerformed(ActionEvent e) {
-        casesToOpen--;
-        //System.out.println("in actionPerformed");
-        updateCasesToOpen(casesToOpen);    
-        //System.out.println("     casesToOpen 1 = " + casesToOpen);
-        //updateCasesToOpen(casesToOpen); //test
+
         Object o = e.getSource(); // holds pointer to caseButtons[i];
         
-        
-        
-                //if(isFirstTurn == true) {
-                //      //choosePlayerCase
-                
-        if(casesToOpen > 0) {
-            bDeal.setEnabled(false);
-            bNoDeal.setEnabled(false);
-        } else if(casesToOpen == 0) {
-            bDeal.setEnabled(true);
-            bNoDeal.setEnabled(true);
-        }
-        
-        //update cases to open?
-        
-       // while (casesToOpen > 0) {
-            
-    
-            for(int i = 0; i < caseButtons.length; i++) {
-                if(o == caseButtons[i]) {
-                    //System.out.println(caseButtons[i]);
-                    System.out.println("button " + (i + 1) + " clicked"); //debug
-                    
+        //searches through all buttons for a match and changes accordingly
+        for(int i = 0; i < caseButtons.length; i++) {
+            if(o == caseButtons[i]) {
+                System.out.println("button " + (i + 1) + " clicked"); //debug
 
+                if(isFirstTurn == true) {
+                    //topLabel.setText("CHOOSE YOUR CASE");
+                    //System.out.println("first turn"); //debug
+                    caseButtons[i].setText("YOUR CASE"); //changes text for the first case chosen (player's case)
+                    caseButtons[i].setFont(new Font("Comic Sans", Font.BOLD, 20));
+                    //topLabel.setText("YOUR CASE IS NUMBER " + (i + 1));
+                    casesToOpen = 6;
+                    topLabel.setText("OPEN " + casesToOpen + " CASE(S)");
 
-                    if(isFirstTurn == true) {
-                        //topLabel.setText("CHOOSE YOUR CASE");
-                        //System.out.println("first turn"); //debug
-                        caseButtons[i].setText("YOUR CASE"); //changes text for the first case chosen (player's case)
-                        caseButtons[i].setFont(new Font("Comic Sans", Font.BOLD, 20));
-                        topLabel.setText("YOUR CASE IS NUMBER " + (i + 1));
-                        isFirstTurn = false;
-                        System.out.println("     ** YOUR CASE IS " + (i + 1) + " **");
-                        //note: this case can still be clicked again atm
+                    System.out.println("     ** YOUR CASE IS " + (i + 1) + " **");
+                    getAvg();
+                    isFirstTurn = false;
 
-                        //do not remove this first case from the array
+                }
+                else if(isFirstTurn == false) {
+                    numCasesOpened++;
 
+                    topLabel.setText("OPEN " + casesToOpen + " CASE(S)");
+                    //updating button
+                    System.out.println("Opening Case " + (i + 1));
+                    caseButtons[i].setEnabled(false); //so button can't be clicked again
+                    caseButtons[i].setOpaque(false); //turns buttons opacity off
+                    caseButtons[i].setText("$" + Integer.toString(caseValuesArray.get(i)));
+                    caseButtons[i].setFont(new Font("Comic Sans", Font.BOLD, 20));
+
+                    //the integer values of caseValuesArray[i] and prizeValuesArray[t] are compared
+                    Integer n = caseValuesArray.get(i); //gets Integer value held by caseValuesArray[i]
+                    System.out.println(n + " is in");
+                    if(numCasesOpened < 25) {
+                        avgSumsArray.remove(n);
+                        getAvg();
                     }
-                    else if(isFirstTurn == false) {
-                        //updating button
-                        System.out.println("Opening Case " + (i + 1));
-                        caseButtons[i].setEnabled(false); //so button can't be clicked again
-                        caseButtons[i].setOpaque(false); //turns buttons opacity off
-                        caseButtons[i].setText("$" + Integer.toString(caseValuesArray[i]));
-                        caseButtons[i].setFont(new Font("Comic Sans", Font.BOLD, 20));
 
-                        //the integer values of caseValuesArray[i] and prizeValuesArray[t] are compared
-                        Integer n = caseValuesArray[i]; //gets Integer value held by caseValuesArray[i] 
-                        for(int t = 0; t < prizeValuesArray.length; t++) {
-                            Integer q = prizeValuesArray[t];
-                            if (q.intValue() == n.intValue()) {
-                                checkBoxes[t].setSelected(true);
-                                checkBoxes[t].setIcon(xIcon); //icon for visibility purposes
+                    for(int t = 0; t < prizeValuesArray.size(); t++) {
+                        Integer q = prizeValuesArray.get(t);
+                        if (q.intValue() == n.intValue()) {
+                            checkBoxes[t].setSelected(true);
+                            checkBoxes[t].setIcon(xIcon); //icon for visibility purposes
 
-                                //remove caseValuesArray[i] from from caseValuesArray[]
 
-                            }
                         }
+                    }
+                    System.out.println("numCasesOpened1 = " + numCasesOpened + " end of action");
 
-                    } // end else if
+                } // end else if
 
-                } // end if
-            } // end for loop
-            
-            //casesToOpen--; //for the while loop
-            //System.out.println("casesToOpen 2 = " + casesToOpen);
-            //System.out.println("exiting while loop");
-                  
-       // }//end while loop
-        
-        //ask player to continue or exit
-        
-
+            } // end if
+        } // end for loop
     } //end ActionPerformed
    
 }
-
-
-       /* Ignore all this
-        
-        //ImageIcon icon = new ImageIcon("howie.jpeg");
-              
-        button2.addActionListener(e -> System.out.println("button2"));
-
-        //button2.setIcon(icon);
-        button2.setText("button2");
-        button2.setHorizontalTextPosition(JButton.CENTER);
-        button2.setVerticalTextPosition(JButton.BOTTOM);
-        button2.setFont(new Font("Comic Sans", Font.BOLD, 25));
-        button2.setIconTextGap(-15); */
-
-        /*
-        
-        ImageIcon image = new ImageIcon("image.jpeg");
-        Border border = BorderFactory.createLineBorder(Color.green, 5);
-        //- could also do JLabel label = new JLabel("test"); to pass directly
-        label = new JLabel(); // create label
-        label.setText("Test test test test"); // set text of label
-        label.setIcon(image);
-        label.setHorizontalTextPosition(JLabel.CENTER);// set text LEFT, CENTER, or RIGHT of image
-        label.setVerticalTextPosition(JLabel.TOP); //set text TOP, CETNER, BOTTOM of image
-        label.setForeground(new Color (255,255,255)); //font color of text
-        label.setFont(new Font("MV Boli", Font.BOLD, 40)); // set font of text (font name, style, size)
-        label.setIconTextGap(10); //set gap of text to image
-        label.setBackground(Color.black); //set background color of text
-        label.setOpaque(true); //display background color
-        label.setBorder(border);//
-        label.setVerticalAlignment((JLabel.CENTER)); //set vertical position of icon+text within label
-        label.setHorizontalAlignment(JLabel.CENTER); //set horizontal position of icon+text within label
-        label.setBounds(100,100,250,250); //set x,y position within frame as well as dimensions
-        label.setVisible(false);
-        
-        JLabel label2 = new JLabel();
-        label2.setText("Example Text");
-        label2.setVerticalAlignment((JLabel.BOTTOM)); //set vertical position of icon+text within label
-        label2.setHorizontalAlignment(JLabel.CENTER);*/
